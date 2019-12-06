@@ -338,7 +338,11 @@ function navigate(msg)
 				end
 				mem.last_status = msg.success	
 			end
+			if not msg.success and not msg.msg:find("Occupied", 1, true) then
+				mem.land = false
+			end
 		end
+
 		if not mem.land then
 			if msg.success then
 				lcd("Jump...")
