@@ -166,7 +166,7 @@ function navigate_info(msg)
 	mem.from = {}
 	vect_set(mem.to, msg.target)
 	vect_set(mem.from, msg.position)
-	mem.range = MAX_POWER / (msg.radius * 10)
+	mem.range = (MAX_POWER - 100) / (msg.radius * 10)
 	mem.maxrange = mem.range
 	mem.radius = msg.radius
 	mem.powerstorage = msg.powerstorage
