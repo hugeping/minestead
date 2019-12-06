@@ -1,3 +1,9 @@
+--[[
+Jumpdrive computer
+Can be connected to mesecon button or/and digistuff touchscreen
+Jumpdrive and LCD (both required) are connected via digilines 
+]]
+
 local MAX_POWER = 250000
 local VERSION = "0.2"
 local MIN_R = 16
