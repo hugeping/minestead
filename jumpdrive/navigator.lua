@@ -73,22 +73,28 @@ function touch_init()
 			X = X + 2, Y = Y, W = 1, H = 1,
 			label = "Z", name = "z",
 			default = tostring(mem.to.z) })
-	digiline_send("touch",
-		      { command = "addbutton_exit",
-			X = X, Y = Y + 1, W = 1, H = 1,
-			name = "hop", label = "Hop!" });
+
 	digiline_send("touch",
 		      { command = "addbutton",
 			X = X- 1 + 3.7, Y = Y- 0.3, W = 1, H = 1,
 			name = "show", label = "Set" });
+
+	digiline_send("touch",
+		      { command = "addbutton_exit",
+			X = X - 1, Y = Y + 1, W = 1, H = 1,
+			name = "hop", label = "Hop!" });
 	digiline_send("touch",
 		      { command = "addbutton",
-			X = X + 2 - 1, Y = Y + 1, W = 1, H = 1,
+			X = X, Y = Y + 1, W = 1, H = 1,
 			name = "read", label = "Read" });
 	digiline_send("touch",
 		      { command = "addbutton",
-			X = X + 3 - 1, Y = Y + 1,  W = 1, H = 1,
+			X = X + 1, Y = Y + 1,  W = 1, H = 1,
 			name = "reset", label = "Reset" });
+	digiline_send("touch",
+		      { command = "addbutton_exit",
+			X = X + 2, Y = Y + 1, W = 1, H = 1,
+			name = "simulate", label = "Sim." });
 
 	if (mem.bm_id or 1) == 1 then
 		digiline_send("touch",
@@ -214,6 +220,11 @@ function navigate_touch(msg)
 		touch_to_jump(msg)
 		digiline_send("jumpdrive", { command = "show" })
 		mem.state = "show"
+	elseif msg.simulate then
+		touch_to_jump(msg)
+		mem.simulate = true
+		mem.state = "start"
+		navigate()
 	elseif msg.hop then
 		touch_to_jump(msg)
 		mem.state = "start"
@@ -357,8 +368,14 @@ function navigate(msg, event)
 		if not mem.land then
 			if msg.success then
 				lcd("Jump...")
-				digiline_send("jumpdrive", { command = "jump" })
-				mem.state = "jump"
+				if mem.simulate then
+					digiline_send("jumpdrive", { command = "get" })
+					mem.state = "end"
+					mem.simulate = false
+				else
+					digiline_send("jumpdrive", { command = "jump" })
+					mem.state = "jump"
+				end
 				return
 			elseif msg.msg:find("Occupied", 1, true) or msg.msg:find("!protected", 1, true) then
 				if mem.hop.hops == 1 then
@@ -426,7 +443,9 @@ function navigate(msg, event)
 		digiline_send("jumpdrive", { command = "set", key = "x", value = mem.to.x })
 		digiline_send("jumpdrive", { command = "set", key = "y", value = mem.to.y })
 		digiline_send("jumpdrive", { command = "set", key = "z", value = mem.to.z })
-		lcd("%d %d %d @%d hop(s) left", mem.to.x, mem.to.y, mem.to.z, mem.hop.hops - 1)
+		lcd("[%d %d %d] %d %d %d @%d hop(s)",
+			mem.hop.x, mem.hop.y, mem.hop.z,
+			mem.to.x, mem.to.y, mem.to.z, mem.hop.hops - 1)
 		touch_restart()
 	end
 end
