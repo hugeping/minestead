@@ -284,7 +284,10 @@ function navigate_touch(msg)
 	end
 end
 
-function navigate(msg)
+function navigate(msg, event)
+	if event and event.channel == 'touch' then
+		return -- just ignore
+	end
 	if mem.state == "start" then
 		mem.program = "navigate"
 		digiline_send("jumpdrive", { command = "get" })
@@ -437,7 +440,7 @@ proc = {
 
 if event.type == "digiline" or event.type == "interrupt" then
 	local msg = event.msg
-	proc[mem.program](msg)
+	proc[mem.program](msg, event)
 elseif event.type == "program" then
 	lcd("Navigator %s by Hugeping '2019", VERSION)
 	mem.state = "start"
