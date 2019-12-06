@@ -75,12 +75,12 @@ function touch_init()
 			default = tostring(mem.to.z) })
 	digiline_send("touch",
 		      { command = "addbutton_exit",
-			X = X - 1, Y = Y + 1, W = 1, H = 1,
-			name = "hop", label = "Hop" });
+			X = X, Y = Y + 1, W = 1, H = 1,
+			name = "hop", label = "Hop!" });
 	digiline_send("touch",
 		      { command = "addbutton",
-			X = X + 1 - 1, Y = Y + 1, W = 1, H = 1,
-			name = "show", label = "Show" });
+			X = X- 1 + 3.7, Y = Y- 0.3, W = 1, H = 1,
+			name = "show", label = "Set" });
 	digiline_send("touch",
 		      { command = "addbutton",
 			X = X + 2 - 1, Y = Y + 1, W = 1, H = 1,
@@ -136,14 +136,21 @@ function touch_init()
 	local bm = {
 		string.format("[Current]: %d %d %d", mem.from.x, mem.from.y, mem.from.z)
 	}
+	local new_bm = {}
 
+	for _, v in ipairs(mem.bm) do -- fix broken
+		if v.nam and v.x and v.y and v.z then
+			table.insert(new_bm, v)
+		end
+	end
+	mem.bm = new_bm
 	for _, v in ipairs(mem.bm) do
 		table.insert(bm, string.format("%s: %d %d %d", v.nam, v.x, v.y, v.z))
 	end
 
 	digiline_send("touch",
 		      { command = "addtextlist",
-			X = X - 1, Y = Y + 2,  W = 4, H = 4,
+			X = X - 1, Y = Y + 2,  W = 5, H = 4,
 			name = "bookmarks", label = "Bookmarks",
 			selected_id = 	mem.bm_id or 1,
 			transparent = true,
@@ -198,7 +205,6 @@ function navigate_touch(msg)
 		end
 		return
 	end
-
 	if msg.reset then
 		digiline_send("jumpdrive", { command = "reset" })
 		touch_restart()
@@ -216,9 +222,9 @@ function navigate_touch(msg)
 		if msg.key_enter_field == "name" or msg.name then
 			table.insert(mem.bm,
 				     { nam = msg.name,
-				       x = mem.from.x,
-				       y = mem.from.y,
-				       z = mem.from.z })
+				       x = mem.pos.x,
+				       y = mem.pos.y,
+				       z = mem.pos.z })
 		end
 		touch_restart()
 	elseif msg.up then
@@ -248,6 +254,8 @@ function navigate_touch(msg)
 	elseif msg.add then
 		local Y = 1
 		local X = 1
+		mem.pos = {}
+		vect_set(mem.pos, msg)
 		digiline_send("touch",
 			      { command = "clear" })
 		digiline_send("touch",
@@ -336,7 +344,7 @@ function navigate(msg)
 					mem.land = - round(mem.land / 2)
 					mem.state = "land"
 				end
-				mem.last_status = msg.success	
+				mem.last_status = msg.success
 			end
 			if not msg.success and not msg.msg:find("Occupied", 1, true) then
 				mem.land = false
@@ -357,7 +365,7 @@ function navigate(msg)
 						mem.land = MIN_R
 					end
 					mem.last_status = false
-				else	
+				else
 					mem.state = "climb"
 				end
 --			lcd("Occupied...")
