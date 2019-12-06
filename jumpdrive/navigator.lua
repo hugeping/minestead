@@ -457,14 +457,14 @@ proc = {
 
 --print(event)
 
-if event.type == "digiline" or event.type == "interrupt" then
+if event.type == "on" or event.msg == "on" then
+	mem.state = "start"
+	navigate()
+elseif event.type == "digiline" or event.type == "interrupt" then
 	local msg = event.msg
 	proc[mem.program](msg, event)
 elseif event.type == "program" then
 	lcd("Navigator %s by Hugeping '2019", VERSION)
 	mem.state = "start"
 	navigate_touch()
-elseif event.type == "on" then
-	mem.state = "start"
-	navigate()
 end
