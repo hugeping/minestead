@@ -1,7 +1,10 @@
 --[[
 Jumpdrive computer
 Can be connected to mesecon button or/and digistuff touchscreen
-Jumpdrive and LCD (both required) are connected via digilines 
+Jumpdrive and LCD (both required) are connected via digilines
+
+lcd channel - lcd
+touch channel - touch
 ]]
 
 local MAX_POWER = 250000
