@@ -128,7 +128,7 @@ function touch_init()
 				     to.distance, to.hops)
 
 	local inf = string.format("Navigator %s\nby Hugeping '2019\n\nPower: %d Hop radius: %d\n%s",
-				  VERSION, mem.powerstorage, mem.maxrange, target)
+				  VERSION, mem.powerstorage, mem.currange, target)
 --	lcd("Pwr: %d R: %d", mem.powerstorage, mem.maxrange)
 	digiline_send("touch",
 		      { command = "addlabel",
@@ -181,6 +181,7 @@ function navigate_info(msg)
 	vect_set(mem.to, msg.target)
 	vect_set(mem.from, msg.position)
 	mem.range = (MAX_POWER - 100) / (msg.radius * 10)
+	mem.currange = msg.powerstorage / (msg.radius * 10)
 	mem.maxrange = mem.range
 	mem.radius = msg.radius
 	mem.powerstorage = msg.powerstorage
@@ -277,7 +278,7 @@ function navigate_touch(msg)
 				default = "Unnamed" })
 		digiline_send("touch",
 			      { command = "addbutton",
-				X = X, Y = Y + 1, W = 2, H = 1,
+				X = X + 4, Y = Y - 0.3, W = 1, H = 1,
 				name = "enter", label = "Add" });
 	elseif msg.bookmarks then
 		if msg.bookmarks:find("CHG:", 1, true) == 1 then
