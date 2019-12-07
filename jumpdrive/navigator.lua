@@ -9,7 +9,7 @@ digiline button - message "on"
 ]]
 
 local MAX_POWER = 250000
-local VERSION = "0.2"
+local VERSION = "0.3"
 local MIN_R = 16
 function lcd(msg, ...)
 	digiline_send("lcd", string.format(msg, ...))
@@ -47,10 +47,47 @@ function vect_set(t, s)
 	t.x, t.y, t.z = s.x, s.y, s.z
 end
 
+function parse_bm_line(l)
+	local s, e
+	local entity = {}
+	s, e = l:find(" ", 1, true)
+	for i = 1, 4 do
+		s, e = false, false
+		if i ~= 4 then
+			s, e = l:find(" ", 1, true)
+			if not s then return false end
+		end
+		local v = l
+		if e then
+			v = tonumber(l:sub(1, e))
+			l = l:sub(e + 1)
+		end
+		table.insert(entity, v)
+	end
+	return entity
+end
+
+function parse_bm_lines(txt)
+	local s, e = true, true
+	local bm = {}
+	while s do
+		s, e = txt:find("\n", 1, true)
+		local l = txt
+		if s then
+			l = txt:sub(1, s - 1)
+			txt = txt:sub(e + 1)
+		end
+		local e = parse_bm_line(l)
+		if e and #e == 4 then
+			table.insert(bm, { x = e[1], y = e[2], z = e[3], nam = e[4] })
+		end
+	end
+	mem.bm = bm
+end
+
 function touch_info(fmt, ...)
 	mem.info = string.format(fmt, ...)
 end
-
 
 function touch_init()
 	local Y = 1
@@ -58,44 +95,42 @@ function touch_init()
 	if not mem.bm then
 		mem.bm = {}
 	end
+	mem.dirty = not mem.dirty -- hack to force form redraw
+
 	digiline_send("touch", { command = "clear" })
+
 	digiline_send("touch",
+		{
 		      { command = "addfield",
 			X = X, Y = Y, W = 1, H = 1,
 			label = "X", name = "x",
-			default = tostring(mem.to.x) })
-	digiline_send("touch",
+			default = tostring(mem.to.x) },
 		      { command = "addfield",
 			X = X + 1, Y = Y, W = 1, H = 1,
 			label = "Y", name = "y",
-			default = tostring(mem.to.y) })
-	digiline_send("touch",
+			default = tostring(mem.to.y) },
 		      { command = "addfield",
 			X = X + 2, Y = Y, W = 1, H = 1,
 			label = "Z", name = "z",
-			default = tostring(mem.to.z) })
+			default = tostring(mem.to.z) },
 
-	digiline_send("touch",
 		      { command = "addbutton",
 			X = X- 1 + 3.7, Y = Y- 0.3, W = 1, H = 1,
-			name = "show", label = "Set" });
-
-	digiline_send("touch",
+			name = "show", label = "Set" },
 		      { command = "addbutton_exit",
 			X = X - 1, Y = Y + 1, W = 1, H = 1,
-			name = "hop", label = "Hop!" });
-	digiline_send("touch",
+			name = "hop", label = "Hop!" },
 		      { command = "addbutton",
 			X = X, Y = Y + 1, W = 1, H = 1,
-			name = "read", label = "Read" });
-	digiline_send("touch",
+			name = "read", label = "Read" },
 		      { command = "addbutton",
 			X = X + 1, Y = Y + 1,  W = 1, H = 1,
-			name = "reset", label = "Reset" });
-	digiline_send("touch",
+			name = "reset", label = "Reset" },
 		      { command = "addbutton_exit",
 			X = X + 2, Y = Y + 1, W = 1, H = 1,
-			name = "simulate", label = "Sim." });
+			name = "simulate", label = "Sim." }
+		});
+
 
 	if (mem.bm_id or 1) == 1 then
 		digiline_send("touch",
@@ -127,18 +162,18 @@ function touch_init()
 	local target = string.format("Distance: %d @ %d hop(s)",
 				     to.distance, to.hops)
 
-	local inf = string.format("Navigator %s\nby Hugeping '2019\n\nPower: %d Hop radius: %d\n%s",
-				  VERSION, mem.powerstorage, mem.currange, target)
+	local inf = string.format("Navigator %s\nby Hugeping '2019\n\nPower: %d Hop radius: %d\n%s%s",
+				  VERSION, mem.powerstorage, mem.currange, target, mem.dirty and "" or " ")
 --	lcd("Pwr: %d R: %d", mem.powerstorage, mem.maxrange)
 	digiline_send("touch",
+		{
 		      { command = "addlabel",
 			X = X + 4, Y = Y - 1, W = 4, H = 1,
-			label = inf });
-
-	digiline_send("touch",
+			label = inf },
 		      { command = "addlabel",
 			X = X + 4, Y = Y + 1, W = 4, H = 1,
-			label = mem.info or "" });
+			label = mem.info or "" }
+		});
 
 	local bm = {
 		string.format("[Current]: %d %d %d", mem.from.x, mem.from.y, mem.from.z)
@@ -151,8 +186,19 @@ function touch_init()
 		end
 	end
 	mem.bm = new_bm
+
 	for _, v in ipairs(mem.bm) do
 		table.insert(bm, string.format("%s: %d %d %d", v.nam, v.x, v.y, v.z))
+	end
+
+	if mem.bm_id and mem.bm_id - 1 > #mem.bm then
+		mem.bm_id = 1
+	end
+
+	if #mem.bm > 0 then
+		digiline_send("touch", { command = "addbutton",
+			X = X + 3, Y = Y + 1, W = 1, H = 1,
+			name = "edit", label = "Edit" })
 	end
 
 	digiline_send("touch",
@@ -264,22 +310,43 @@ function navigate_touch(msg)
 			end
 		end
 		touch_restart()
+	elseif msg.save then
+		local text = msg.edit
+		parse_bm_lines(text)
+		touch_restart()
+	elseif msg.edit then
+		local Y = 1
+		local X = 1
+		local text = ''
+		for _, v in ipairs(mem.bm) do
+			text = text .. string.format("%d %d %d %s\n", v.x, v.y, v.z, v.nam)
+		end
+
+		digiline_send("touch", {
+			      { command = "clear" },
+			      { command = "addtextarea",
+				X = X, Y = Y, W = 8, H = 6,
+				name = "edit", label = "Edit",
+				default = text },
+			      { command = "addbutton",
+				X = X, Y = Y + 6, W = 2, H = 1,
+				name = "save", label = "Save" }
+			});
 	elseif msg.add then
 		local Y = 1
 		local X = 1
 		mem.pos = {}
 		vect_set(mem.pos, msg)
-		digiline_send("touch",
-			      { command = "clear" })
-		digiline_send("touch",
+		digiline_send("touch", {
+			      { command = "clear" },
 			      { command = "addfield",
 				X = X, Y = Y, W = 4, H = 1,
 				label = "Name", name = "name",
-				default = "Unnamed" })
-		digiline_send("touch",
+				default = "Unnamed" },
 			      { command = "addbutton",
 				X = X + 4, Y = Y - 0.3, W = 1, H = 1,
-				name = "enter", label = "Add" });
+				name = "enter", label = "Add" }
+			});
 	elseif msg.bookmarks then
 		if msg.bookmarks:find("CHG:", 1, true) == 1 then
 			local num = tonumber(msg.bookmarks:sub(5))
