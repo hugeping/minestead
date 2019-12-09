@@ -275,6 +275,7 @@ function navigate_touch(msg)
 		navigate()
 	elseif msg.hop then
 		touch_to_jump(msg)
+		mem.simulate = false
 		mem.state = "start"
 		navigate()
 	elseif msg.key_enter_field or msg.enter then
