@@ -463,6 +463,9 @@ function navigate(msg, event)
 				mem.state = "range"
 			else
 				lcd("Err %s", msg.msg)
+				digiline_send("jumpdrive", { command = "set", key = "x", value = mem.to.x })
+				digiline_send("jumpdrive", { command = "set", key = "y", value = mem.to.y })
+				digiline_send("jumpdrive", { command = "set", key = "z", value = mem.to.z })
 				touch_restart()
 			end
 		end
@@ -471,10 +474,15 @@ function navigate(msg, event)
 		mem.range = mem.range - (mem.maxrange * 0.1)
 		if mem.range < mem.maxrange * 0.1 then
 			lcd("Uncharted area")
+			digiline_send("jumpdrive", { command = "set", key = "x", value = mem.to.x })
+			digiline_send("jumpdrive", { command = "set", key = "y", value = mem.to.y })
+			digiline_send("jumpdrive", { command = "set", key = "z", value = mem.to.z })
 			touch_restart()
 			return
 		end
 		mem.state = "prog"
+		local to = path(mem.from, mem.to, mem.range)
+		mem.hop = to
 		lcd("Range %d", mem.range)
 		navigate(msg)
 		return
