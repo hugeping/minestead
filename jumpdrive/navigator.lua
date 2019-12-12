@@ -409,6 +409,7 @@ function navigate(msg, event)
 			digiline_send("jumpdrive", { command = "set", key = "x", value = mem.to.x })
 			digiline_send("jumpdrive", { command = "set", key = "y", value = mem.to.y })
 			digiline_send("jumpdrive", { command = "set", key = "z", value = mem.to.z })
+			touch_restart()
 			return
 		end
 		mem.state = "simulate"
