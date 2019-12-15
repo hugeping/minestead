@@ -102,30 +102,35 @@ function touch_init()
 	digiline_send("touch",
 		{
 		      { command = "addfield",
-			X = X, Y = Y, W = 1, H = 1,
+			X = X - 0.7, Y = Y, W = 1, H = 1,
 			label = "X", name = "x",
 			default = tostring(mem.to.x) },
 		      { command = "addfield",
-			X = X + 1, Y = Y, W = 1, H = 1,
+			X = X + 1 - 0.7, Y = Y, W = 1, H = 1,
 			label = "Y", name = "y",
 			default = tostring(mem.to.y) },
 		      { command = "addfield",
-			X = X + 2, Y = Y, W = 1, H = 1,
+			X = X + 2 - 0.7, Y = Y, W = 1, H = 1,
 			label = "Z", name = "z",
 			default = tostring(mem.to.z) },
 
 		      { command = "addbutton",
-			X = X- 1 + 3.7, Y = Y- 0.3, W = 1, H = 1,
+			X = X- 1 + 3.7 - 0.8, Y = Y- 0.3, W = 1, H = 1,
 			name = "show", label = "Set" },
+
+		      { command = "addbutton",
+			X = X- 1 + 3.8, Y = Y- 0.3, W = 1, H = 1,
+			name = "reset", label = "Reset" },
+
 		      { command = "addbutton_exit",
 			X = X - 1, Y = Y + 1, W = 1, H = 1,
 			name = "hop", label = "Hop!" },
 		      { command = "addbutton",
 			X = X, Y = Y + 1, W = 1, H = 1,
 			name = "read", label = "Read" },
-		      { command = "addbutton",
+		      { command = "addbutton_exit",
 			X = X + 1, Y = Y + 1,  W = 1, H = 1,
-			name = "reset", label = "Reset" },
+			name = "sonar", label = "Sonar" },
 		      { command = "addbutton_exit",
 			X = X + 2, Y = Y + 1, W = 1, H = 1,
 			name = "simulate", label = "Sim." }
@@ -239,6 +244,7 @@ function touch_restart(cls)
 		touch_info ""
 	end
 	mem.state = "start"
+	mem.last_prog = mem.program
 	navigate_touch()
 end
 
@@ -262,6 +268,10 @@ function navigate_touch(msg)
 	if msg.reset then
 		digiline_send("jumpdrive", { command = "reset" })
 		touch_restart()
+	elseif msg.sonar then
+		touch_to_jump(msg)
+		mem.state = "start"
+		sonar()
 	elseif msg.read then
 		touch_restart()
 	elseif msg.show then
@@ -362,6 +372,67 @@ function navigate_touch(msg)
 		touch_restart()
 	elseif msg.quit then
 		touch_restart()
+	end
+end
+
+function sonar(msg, event)
+	if event and event.channel == 'touch' then
+		return -- just ignore
+	end
+	if mem.state == "start" then
+		mem.iter = 0
+		mem.program = "sonar"
+		digiline_send("jumpdrive", { command = "get" })
+		mem.state = "init"
+--		lcd("Initializing...")
+		return
+	elseif mem.state == "init" then
+		mem.hop = {}
+		vect_set(mem.hop, msg.target)
+		mem.radius = msg.radius
+		mem.state = "prog"
+	end
+	if mem.state == "prog" then
+		digiline_send("jumpdrive", { command = "set", key = "x", value = mem.hop.x })
+		digiline_send("jumpdrive", { command = "set", key = "y", value = mem.hop.y })
+		digiline_send("jumpdrive", { command = "set", key = "z", value = mem.hop.z })
+		digiline_send("jumpdrive", { command = "get" })
+		mem.state = "fuel"
+	elseif mem.state == "fuel" then
+		if msg.power_req > msg.powerstorage then
+			lcd("Out of range.")
+			touch_restart()
+			return
+		end
+		mem.state = "sonar"
+		digiline_send("jumpdrive", { command = "show" })
+	elseif mem.state == "sonar" then
+		mem.iter = mem.iter + 1
+		if mem.iter > 50 then
+			lcd("%d %d %d: Failed", mem.hop.x, mem.hop.y, mem.hop.z)
+			touch_restart()
+			return
+		end
+		if msg.success then
+			lcd("%d %d %d: Ok", mem.hop.x, mem.hop.y, mem.hop.z)
+			touch_restart()
+		elseif msg.msg:find("Occupied", 1, true) or msg.msg:find("protected", 1, true) then
+			lcd("%d %d %d: Occupied", mem.hop.x, mem.hop.y, mem.hop.z)
+			mem.state = "prog"
+			mem.hop.y = mem.hop.y - mem.radius * 2
+			interrupt(0.3)
+		elseif msg.msg:find("uncharted", 1, true) then
+			lcd("%d %d %d: Uncharted", mem.hop.x, mem.hop.y, mem.hop.z)
+			mem.state = "prog"
+			local d = mem.radius * 4
+			if d < MIN_R then d = MIN_R end
+			mem.hop.y = mem.hop.y - d
+			interrupt(0.3)
+		else
+			lcd("%d %d %d: %s", mem.hop.x, mem.hop.y, mem.hop.z, msg.msg)
+			touch_restart()
+		end
+		return
 	end
 end
 
@@ -531,6 +602,7 @@ end
 
 proc = {
 	navigate = navigate,
+	sonar = sonar,
 	navigate_touch = navigate_touch,
 }
 
@@ -538,7 +610,10 @@ proc = {
 
 if event.type == "on" or event.msg == "on" then
 	mem.state = "start"
-	navigate()
+	if mem.program == "navigate_touch" then
+		mem.program = mem.last_prog
+	end
+	proc[mem.program](msg, event)
 elseif event.type == "digiline" or event.type == "interrupt" then
 	local msg = event.msg
 	proc[mem.program](msg, event)
