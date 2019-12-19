@@ -102,25 +102,47 @@ function touch_init()
 	digiline_send("touch",
 		{
 		      { command = "addfield",
-			X = X - 0.7, Y = Y, W = 1, H = 1,
+			X = X - 0.7, Y = Y - 0.5, W = 1, H = 1,
 			label = "X", name = "x",
 			default = tostring(mem.to.x) },
 		      { command = "addfield",
-			X = X + 1 - 0.7, Y = Y, W = 1, H = 1,
+			X = X + 1 - 0.7, Y = Y - 0.5, W = 1, H = 1,
 			label = "Y", name = "y",
 			default = tostring(mem.to.y) },
 		      { command = "addfield",
-			X = X + 2 - 0.7, Y = Y, W = 1, H = 1,
+			X = X + 2 - 0.7, Y = Y - 0.5, W = 1, H = 1,
 			label = "Z", name = "z",
 			default = tostring(mem.to.z) },
 
 		      { command = "addbutton",
-			X = X- 1 + 3.7 - 0.8, Y = Y- 0.3, W = 1, H = 1,
+			X = X- 1 + 3.7 - 0.8, Y = Y- 0.8, W = 1, H = 1,
 			name = "show", label = "Set" },
 
 		      { command = "addbutton",
-			X = X- 1 + 3.8, Y = Y- 0.3, W = 1, H = 1,
+			X = X- 1 + 3.8, Y = Y- 0.8, W = 1, H = 1,
 			name = "reset", label = "Reset" },
+
+		      { command = "addfield",
+			X = X - 0.7, Y = Y + 0.5, W = 1, H = 1,
+			label = "dX", name = "dx",
+			default = mem.dx or "0" },
+		      { command = "addfield",
+			X = X + 1 - 0.7, Y = Y + 0.5, W = 1, H = 1,
+			label = "dY", name = "dy",
+			default = mem.dy or "0" },
+		      { command = "addfield",
+			X = X + 2 - 0.7, Y = Y + 0.5, W = 1, H = 1,
+			label = "dZ", name = "dz",
+			default = mem.dz or "0" },
+
+		      { command = "addbutton",
+			X = X- 1 + 3.7 - 0.8, Y = Y + 0.2, W = 1, H = 1,
+			name = "deltaadd", label = "Add" },
+
+		      { command = "addbutton",
+			X = X- 1 + 3.8, Y = Y + 0.2, W = 1, H = 1,
+			name = "mod", label = "Mod 16" },
+
 
 		      { command = "addbutton_exit",
 			X = X - 1, Y = Y + 1, W = 1, H = 1,
@@ -220,7 +242,7 @@ function touch_to_jump(msg)
 	local X, Y, Z = tonumber(msg.x) or mem.to.x,
 	tonumber(msg.y) or mem.to.y,
 	tonumber(msg.z) or mem.to.z
-
+	mem.dx, mem.dy, mem.dz = msg.dx or "0", msg.dy or "0", msg.dz or "0"
 	digiline_send("jumpdrive", { command = "set", key = "x", value = X })
 	digiline_send("jumpdrive", { command = "set", key = "y", value = Y })
 	digiline_send("jumpdrive", { command = "set", key = "z", value = Z })
@@ -272,6 +294,18 @@ function navigate_touch(msg)
 		touch_to_jump(msg)
 		mem.state = "start"
 		sonar()
+	elseif msg.deltaadd then
+		msg.x = msg.x + msg.dx
+		msg.y = msg.y + msg.dy
+		msg.z = msg.z + msg.dz
+		touch_to_jump(msg)
+		touch_restart()
+	elseif msg.mod then
+		msg.x = math.floor(msg.x  / 16) * 16
+		msg.y = math.floor(msg.y  / 16) * 16
+		msg.z = math.floor(msg.z  / 16) * 16
+		touch_to_jump(msg)
+		touch_restart()
 	elseif msg.read then
 		touch_restart()
 	elseif msg.show then
