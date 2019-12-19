@@ -645,7 +645,7 @@ proc = {
 if event.type == "on" or event.msg == "on" then
 	mem.state = "start"
 	if mem.program == "navigate_touch" then
-		mem.program = mem.last_prog
+		mem.program = (mem.last_prog ~= "navigate_touch") and mem.last_prog or "navigate"
 	end
 	proc[mem.program](msg, event)
 elseif event.type == "digiline" or event.type == "interrupt" then
