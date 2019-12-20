@@ -189,7 +189,7 @@ function touch_init()
 			name = "delay", label = "Delay:", default = mem.delay or "0"});
 
 	digiline_send("touch",
-		      { command = "addbutton",
+		      { command = "addbutton_exit",
 			X = X + 7, Y = Y + 6,  W = 1, H = 1,
 			name = "dset", label = "Set" });
 
@@ -335,8 +335,15 @@ function navigate_touch(msg)
 		navigate()
 	elseif msg.dset then
 		mem.delay = msg.delay
-		touch_restart()
-		lcd("Delay set: %d", mem.delay)
+		local d = tonumber(mem.delay) or 0
+		if d > 0 then
+			lcd("Delayed hop: %d", d)
+			interrupt(d, "delay")
+			mem.last_prog = "navigate"
+			mem.skip_interrupt = false
+		else
+			touch_restart()
+		end
 		return
 	elseif msg.dcancel then
 		mem.delay = "0"
@@ -347,15 +354,7 @@ function navigate_touch(msg)
 		touch_to_jump(msg)
 		mem.simulate = false
 		mem.state = "start"
-		local d = tonumber(mem.delay) or 0
-		if d > 0 then
-			lcd("Delayed hop: %d", d)
-			interrupt(d, "delay")
-			mem.last_prog = "navigate"
-			mem.skip_interrupt = false
-		else
-			navigate()
-		end
+		navigate()
 	elseif msg.key_enter_field or msg.enter then
 		if msg.key_enter_field == "name" or msg.name then
 			table.insert(mem.bm,
