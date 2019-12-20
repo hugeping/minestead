@@ -9,7 +9,7 @@ digiline button - message "on"
 ]]
 
 local MAX_POWER = 250000
-local VERSION = "0.3"
+local VERSION = "0.5"
 local MIN_R = 16
 function lcd(msg, ...)
 	digiline_send("lcd", string.format(msg, ...))
@@ -183,6 +183,20 @@ function touch_init()
 				name = "down", label = "Down" });
 		end
 	end
+	digiline_send("touch",
+		      { command = "addfield",
+			X = X + 6 + 0.5, Y = Y + 6 + 0.30,  W = 1, H = 1,
+			name = "delay", label = "Delay:", default = mem.delay or "0"});
+
+	digiline_send("touch",
+		      { command = "addbutton",
+			X = X + 7, Y = Y + 6,  W = 1, H = 1,
+			name = "dset", label = "Set" });
+
+	digiline_send("touch",
+		      { command = "addbutton_exit",
+			X = X + 7 + 0.8, Y = Y + 6,  W = 1, H = 1,
+			name = "dcancel", label = "Cancel" });
 
 	local to = path(mem.from, mem.to, mem.range)
 
@@ -267,6 +281,8 @@ function touch_restart(cls)
 	end
 	mem.state = "start"
 	mem.last_prog = mem.program
+	mem.skip_interrupt = true
+	interrupt(0, "delay")
 	navigate_touch()
 end
 
@@ -317,11 +333,29 @@ function navigate_touch(msg)
 		mem.simulate = true
 		mem.state = "start"
 		navigate()
+	elseif msg.dset then
+		mem.delay = msg.delay
+		touch_restart()
+		lcd("Delay set: %d", mem.delay)
+		return
+	elseif msg.dcancel then
+		mem.delay = "0"
+		lcd("Delay canceled")
+		touch_restart()
+		return
 	elseif msg.hop then
 		touch_to_jump(msg)
 		mem.simulate = false
 		mem.state = "start"
-		navigate()
+		local d = tonumber(mem.delay) or 0
+		if d > 0 then
+			lcd("Delayed hop: %d", d)
+			interrupt(d, "delay")
+			mem.last_prog = "navigate"
+			mem.skip_interrupt = false
+		else
+			navigate()
+		end
 	elseif msg.key_enter_field or msg.enter then
 		if msg.key_enter_field == "name" or msg.name then
 			table.insert(mem.bm,
@@ -458,9 +492,15 @@ function sonar(msg, event)
 		elseif msg.msg:find("uncharted", 1, true) then
 			lcd("%d %d %d: Uncharted", mem.hop.x, mem.hop.y, mem.hop.z)
 			mem.state = "prog"
-			local d = mem.radius * 4
-			if d < MIN_R then d = MIN_R end
-			mem.hop.y = mem.hop.y - d
+			if mem.dx ~= 0 or mem.dy ~= 0 or mem.dz ~= 0 then
+				mem.hop.x = mem.hop.x + mem.dx
+				mem.hop.y = mem.hop.y + mem.dy
+				mem.hop.z = mem.hop.z + mem.dz
+			else
+				local d = mem.radius * 4
+				if d < MIN_R then d = MIN_R end
+				mem.hop.y = mem.hop.y - d
+			end
 			interrupt(0.3)
 		else
 			lcd("%d %d %d: %s", mem.hop.x, mem.hop.y, mem.hop.z, msg.msg)
@@ -641,8 +681,13 @@ proc = {
 }
 
 --print(event)
+if event.type == "interrupt" and mem.skip_interrupt and event.iid == "delay" then
+	mem.skip_interrupt = false
+	return
+end
 
-if event.type == "on" or event.msg == "on" then
+if event.type == "on" or event.msg == "on" or
+		(event.type == "interrupt" and event.iid == "delay") then
 	mem.state = "start"
 	if mem.program == "navigate_touch" then
 		mem.program = (mem.last_prog ~= "navigate_touch") and mem.last_prog or "navigate"
