@@ -189,12 +189,12 @@ function touch_init()
 			name = "delay", label = "Delay:", default = mem.delay or "0"});
 
 	digiline_send("touch",
-		      { command = "addbutton_exit",
+		      { command = "addbutton",
 			X = X + 7, Y = Y + 6,  W = 1, H = 1,
 			name = "dset", label = "Set" });
 
 	digiline_send("touch",
-		      { command = "addbutton_exit",
+		      { command = "addbutton",
 			X = X + 7 + 0.8, Y = Y + 6,  W = 1, H = 1,
 			name = "dcancel", label = "Cancel" });
 
@@ -202,6 +202,10 @@ function touch_init()
 
 	local target = string.format("Distance: %d @ %d hop(s)",
 				     to.distance, to.hops)
+
+	if mem.delay and mem.delayed_hop then
+		target = target .. string.format(" delay %d", tonumber(mem.delay))
+	end
 
 	local inf = string.format("Navigator %s\nby Hugeping '2019\n\nPower: %d Hop radius: %d\n%s%s",
 				  VERSION, mem.powerstorage, mem.currange, target, mem.dirty and "" or " ")
@@ -281,8 +285,6 @@ function touch_restart(cls)
 	end
 	mem.state = "start"
 	mem.last_prog = mem.program
-	mem.skip_interrupt = true
-	interrupt(0, "delay")
 	navigate_touch()
 end
 
@@ -340,13 +342,12 @@ function navigate_touch(msg)
 			lcd("Delayed hop: %d", d)
 			interrupt(d, "delay")
 			mem.last_prog = "navigate"
-			mem.skip_interrupt = false
-		else
-			touch_restart()
+			mem.delayed_hop = true
 		end
+		touch_restart()
 		return
 	elseif msg.dcancel then
-		mem.delay = "0"
+		mem.delayed_hop = false
 		lcd("Delay canceled")
 		touch_restart()
 		return
@@ -680,14 +681,16 @@ proc = {
 }
 
 --print(event)
-if event.type == "interrupt" and mem.skip_interrupt and event.iid == "delay" then
-	mem.skip_interrupt = false
+if event.type == "interrupt" and not mem.delayed_hop and event.iid == "delay" then
 	return
 end
 
 if event.type == "on" or event.msg == "on" or
 		(event.type == "interrupt" and event.iid == "delay") then
 	mem.state = "start"
+	if event.type == "interrupt" then -- delayed
+		mem.delayed_hop = false
+	end
 	if mem.program == "navigate_touch" then
 		mem.program = (mem.last_prog ~= "navigate_touch") and mem.last_prog or "navigate"
 	end
