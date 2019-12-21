@@ -89,6 +89,24 @@ function touch_info(fmt, ...)
 	mem.info = string.format(fmt, ...)
 end
 
+function touch_lock()
+	local Y = 1
+	local X = 1
+	digiline_send("touch", { command = "clear" })
+
+	local inf = string.format("Program: %s", mem.program)
+
+	digiline_send("touch",
+		{
+		      { command = "addlabel",
+			X = X + 1, Y = Y + 1, W = 4, H = 1,
+			label = inf },
+		      { command = "addbutton",
+			X = X + 1, Y = Y + 2, W = 1, H = 1,
+			name = "prog_cancel", label = "Cancel" },
+		});
+end
+
 function touch_init()
 	local Y = 1
 	local X = 1
@@ -125,15 +143,15 @@ function touch_init()
 		      { command = "addfield",
 			X = X - 0.7, Y = Y + 0.5, W = 1, H = 1,
 			label = "dX", name = "dx",
-			default = mem.dx or "0" },
+			default = tostring(mem.dx or "0") },
 		      { command = "addfield",
 			X = X + 1 - 0.7, Y = Y + 0.5, W = 1, H = 1,
 			label = "dY", name = "dy",
-			default = mem.dy or "0" },
+			default = tostring(mem.dy or "0")},
 		      { command = "addfield",
 			X = X + 2 - 0.7, Y = Y + 0.5, W = 1, H = 1,
 			label = "dZ", name = "dz",
-			default = mem.dz or "0" },
+			default = tostring(mem.dz or "0") },
 
 		      { command = "addbutton",
 			X = X- 1 + 3.7 - 0.8, Y = Y + 0.2, W = 1, H = 1,
@@ -260,7 +278,9 @@ function touch_to_jump(msg)
 	local X, Y, Z = tonumber(msg.x) or mem.to.x,
 	tonumber(msg.y) or mem.to.y,
 	tonumber(msg.z) or mem.to.z
-	mem.dx, mem.dy, mem.dz = msg.dx or "0", msg.dy or "0", msg.dz or "0"
+	mem.dx, mem.dy, mem.dz = tonumber(msg.dx or "0"),
+		tonumber(msg.dy or "0"),
+		tonumber(msg.dz or "0")
 	digiline_send("jumpdrive", { command = "set", key = "x", value = X })
 	digiline_send("jumpdrive", { command = "set", key = "y", value = Y })
 	digiline_send("jumpdrive", { command = "set", key = "z", value = Z })
@@ -311,11 +331,18 @@ function navigate_touch(msg)
 	elseif msg.sonar then
 		touch_to_jump(msg)
 		mem.state = "start"
+		touch_lock()
 		sonar()
 	elseif msg.deltaadd then
-		msg.x = msg.x + msg.dx
-		msg.y = msg.y + msg.dy
-		msg.z = msg.z + msg.dz
+		if tonumber(msg.x) and tonumber(msg.dx) then
+			msg.x = tonumber(msg.x) + tonumber(msg.dx)
+		end
+		if tonumber(msg.y) and tonumber(msg.dy) then
+			msg.y = tonumber(msg.y) + tonumber(msg.dy)
+		end
+		if tonumber(msg.z) and tonumber(msg.dz) then
+			msg.z = tonumber(msg.z) + tonumber(msg.dz)
+		end
 		touch_to_jump(msg)
 		touch_restart()
 	elseif msg.mod then
@@ -334,6 +361,7 @@ function navigate_touch(msg)
 		touch_to_jump(msg)
 		mem.simulate = true
 		mem.state = "start"
+		touch_lock()
 		navigate()
 	elseif msg.dset then
 		mem.delay = msg.delay
@@ -445,6 +473,9 @@ end
 
 function sonar(msg, event)
 	if event and event.channel == 'touch' then
+		if msg.prog_cancel then
+			touch_restart()
+		end
 		return -- just ignore
 	end
 	if mem.state == "start" then
@@ -487,7 +518,13 @@ function sonar(msg, event)
 		elseif msg.msg:find("Occupied", 1, true) or msg.msg:find("protected", 1, true) then
 			lcd("%d %d %d: Occupied", mem.hop.x, mem.hop.y, mem.hop.z)
 			mem.state = "prog"
-			mem.hop.y = mem.hop.y - mem.radius * 2
+			if mem.dx ~= 0 or mem.dy ~= 0 or mem.dz ~= 0 then
+				mem.hop.x = mem.hop.x + mem.dx
+				mem.hop.y = mem.hop.y + mem.dy
+				mem.hop.z = mem.hop.z + mem.dz
+			else
+				mem.hop.y = mem.hop.y - mem.radius * 2
+			end
 			interrupt(0.3)
 		elseif msg.msg:find("uncharted", 1, true) then
 			lcd("%d %d %d: Uncharted", mem.hop.x, mem.hop.y, mem.hop.z)
@@ -512,6 +549,9 @@ end
 
 function navigate(msg, event)
 	if event and event.channel == 'touch' then
+		if msg.prog_cancel then
+			touch_restart()
+		end
 		return -- just ignore
 	end
 	if mem.state == "start" then
