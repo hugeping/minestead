@@ -207,7 +207,7 @@ function touch_init()
 			name = "delay", label = "Delay:", default = mem.delay or "0"});
 
 	digiline_send("touch",
-		      { command = "addbutton",
+		      { command = "addbutton_exit",
 			X = X + 7, Y = Y + 6,  W = 1, H = 1,
 			name = "dset", label = "Set" });
 
