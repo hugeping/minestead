@@ -383,6 +383,7 @@ function navigate_touch(msg)
 		touch_to_jump(msg)
 		mem.simulate = false
 		mem.state = "start"
+		touch_lock()
 		navigate()
 	elseif msg.key_enter_field or msg.enter then
 		if msg.key_enter_field == "name" or msg.name then
@@ -702,6 +703,7 @@ function navigate(msg, event)
 		if eq(mem.to, msg.position) then
 			lcd("Ok: %d %d %d", mem.to.x, mem.to.y, mem.to.z)
 			touch_restart()
+			mem.bm_id = 1
 			return -- finish
 		end
 		digiline_send("jumpdrive", { command = "set", key = "x", value = mem.to.x })
