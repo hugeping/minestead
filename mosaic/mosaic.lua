@@ -134,9 +134,9 @@ pics = {
 },
 {
 "ccccccccccccccnn",
-"cccccgccccccccnn",
-"cggggcccccccccnn",
-"gggcccccccccccnn",
+"ccccccccccccccnn",
+"ccccccccccccccnn",
+"ccccccccccccccnn",
 "ccccccc*****c**n",
 "ccc**c*******..*",
 "cc*..********..*",
