@@ -216,6 +216,23 @@ pics = {
 "GGGGGo....oGGGGG",
 "GGGGGGooooGGGGGG",
 "GGGGGGooooGGGGGG",
+},
+{
+"                ",
+"      nn        ",
+" npnnyyyynnpn   ",
+" n ny.yy.yn n   ",
+"   ny#yy#yn     ",
+"    yyyyyy      ",
+"     yyyy       ",
+"      pp  y     ",
+" v yyp**py      ",
+"vyv  pppp  ##   ",
+" G  pppppp ##  #",
+" GG  y  y  #### ",
+" G   #  #  #  # ",
+"gggggggggggggggg",
+"GGGGGGGGGGGGGGGG",
 }
 }
 
