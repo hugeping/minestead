@@ -7,6 +7,7 @@ local col = {
   ["g"] = "wool:green",
   ["b"] = "wool:blue",
   ["y"] = "wool:yellow",
+  ["n"] = "wool:brown",
 }
 
 local W = 16
@@ -109,6 +110,23 @@ pics = {
 "  #yyy#yyyyy### ",
 "  ###########   ",
 },
+{
+"................",
+".....rrrrrr.....",
+"....rrrrrrrr....",
+"....rrrrrrrr....",
+"...rrrrrrrrrr...",
+"...nnyyyyyynn...",
+"...nyy#yy#yyn...",
+"....yyyyyyyy....",
+"....y#....#y....",
+"....yy#rr#yy....",
+".....yyyyyy.....",
+"......yyyy......",
+"..bbn*nbbn*nbb..",
+".bbb***bb***bbb.",
+".bbbn*nnnn*nbbb.",
+}
 }
 
 local TO = 1
