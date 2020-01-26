@@ -200,6 +200,7 @@ pics = {
 "gggg.......ggggg",
 "ggggg.....gggggg",
 },
+{
 "GoooGGGGGGGGoooG",
 "G..oGooooooGo..G",
 "G..oo#....#oo..G",
@@ -215,6 +216,7 @@ pics = {
 "GGGGGo....oGGGGG",
 "GGGGGGooooGGGGGG",
 "GGGGGGooooGGGGGG",
+}
 }
 
 local TO = 1
