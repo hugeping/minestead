@@ -11,7 +11,7 @@ local col = {
 }
 
 local W = 16
-local H = 16
+local H = 15
 
 function row(str)
 	for i = 1, W do
@@ -131,6 +131,10 @@ pics = {
 
 local TO = 1
 
+function lcd(fmt, ...)
+	digiline_send("lcd", string.format(fmt, ...))
+end
+
 function draw()
 	if mem.stage == 1 then
 		port.a = true -- clear top line
@@ -147,7 +151,7 @@ function draw()
 		mem.stage = 1
 		mem.row = mem.row + 1
 	end
-	if mem.row <= 15 then
+	if mem.row <= H then
 		interrupt(TO)
   else
     mem.stage = 0
@@ -157,15 +161,24 @@ end
 if event.type == "program" then
 	mem.pic = 0
 	mem.prog = 'draw'
-  mem.stage = 0
+	mem.stage = 0
+	lcd("Pictures: %d", #pics)
 elseif event.type == "interrupt" then
 	draw()
 elseif event.type == "on" and mem.stage == 0 then
-  mem.pic = mem.pic + 1
-  mem.row = 1
-  mem.stage = 1
-  if mem.pic > #pics then
-     mem.pic = 1
-  end
-  interrupt(1)
+	mem.pic = mem.pic + 1
+	lcd("Drawing: %d", mem.pic)
+	mem.row = 1
+	mem.stage = 1
+	if mem.pic > #pics then
+		mem.pic = 1
+	end
+	interrupt(1)
+elseif event.channel == "kbd" and mem.stage == 0 then
+	mem.pic = (tonumber(event.msg) or 1)
+	if mem.pic < 1 or mem.pic > #pics then
+		mem.pic = 1
+	end
+	lcd("Set pic: %d", mem.pic)
+	mem.pic = mem.pic - 1
 end
