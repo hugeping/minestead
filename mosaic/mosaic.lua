@@ -178,6 +178,23 @@ pics = {
 "######ggg####ggg",
 "#######g#####ggg",
 },
+{
+"gggggggygggggggg",
+"gggggyyyyygggggg",
+"ggggyyyyyyyggggg",
+"ggggy..y..yggggg",
+"gggyy.byb.yygggg",
+"gggyyyrrryyygggg",
+"ggggyyyryyyggggg",
+"g.gggyyyyyggg.gg",
+"g..gyyyyyyyg..gg",
+"gg..y.yy.yy..ggg",
+"gg....y......ggg",
+"gg...........ggg",
+"ggg.........gggg",
+"gggg.......ggggg",
+"ggggg.....gggggg",
+}
 }
 
 local TO = 1
