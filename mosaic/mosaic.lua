@@ -167,12 +167,12 @@ elseif event.type == "interrupt" then
 	draw()
 elseif event.type == "on" and mem.stage == 0 then
 	mem.pic = mem.pic + 1
-	lcd("Drawing: %d", mem.pic)
 	mem.row = 1
 	mem.stage = 1
 	if mem.pic > #pics then
 		mem.pic = 1
 	end
+	lcd("Drawing: %d", mem.pic)
 	interrupt(1)
 elseif event.channel == "kbd" and mem.stage == 0 then
 	mem.pic = (tonumber(event.msg) or 1)
