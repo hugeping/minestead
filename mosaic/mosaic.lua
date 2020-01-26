@@ -8,6 +8,9 @@ local col = {
   ["b"] = "wool:blue",
   ["y"] = "wool:yellow",
   ["n"] = "wool:brown",
+  ["o"] = "wool:orange",
+  ["v"] = "wool:violet",
+  ["G"] = "wool:dark_green",
 }
 
 local W = 16
