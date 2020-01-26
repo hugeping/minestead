@@ -199,7 +199,22 @@ pics = {
 "ggg.........gggg",
 "gggg.......ggggg",
 "ggggg.....gggggg",
-}
+},
+"GoooGGGGGGGGoooG",
+"G..oGooooooGo..G",
+"G..oo#....#oo..G",
+"GGGo#......#oGGG",
+"GGooo.#..#.oooGG",
+"GGo#ooppppoo#oGG",
+"GG....pppp....GG",
+"GGGo#..pp..#oGGG",
+"GGGo#......#oGGG",
+"GGGo.######.oGGG",
+"GGGGo......oGGGG",
+"GGGGo......oGGGG",
+"GGGGGo....oGGGGG",
+"GGGGGGooooGGGGGG",
+"GGGGGGooooGGGGGG",
 }
 
 local TO = 1
